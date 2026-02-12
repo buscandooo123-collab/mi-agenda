@@ -586,23 +586,25 @@
         function abrirModalItem(item = null) {
             editandoItem = item;
             const tab = getTabActiva();
+            if (!tab) { toast('⚠️ Selecciona una categoría'); return; }
+            const tipo = tab.tipo || 'notas';
             let html = '';
 
-            if (tab.tipo === 'pagos') {
+            if (tipo === 'pagos') {
                 html = `<h2>${item ? '✏️ Editar' : '➕ Nuevo'} Pago</h2>
-                    <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input" id="item-nombre" value="${item?.nombre || ''}"></div>
+                    <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input" id="item-nombre" value="${item?.nombre || ''}" placeholder="Ej: Luz, Internet..."></div>
                     <div class="form-group"><label class="form-label">Día del mes</label><input type="number" class="form-input" id="item-dia" min="1" max="31" value="${item?.dia || new Date().getDate()}"></div>
-                    <div class="form-group"><label class="form-label">Monto $</label><input type="number" class="form-input" id="item-monto" value="${item?.monto || ''}"></div>
-                    <div class="form-group"><label class="form-label">Número cuenta/referencia</label><input type="text" class="form-input" id="item-cuenta" value="${item?.cuenta || ''}"></div>
-                    <div class="form-group"><label class="form-label">Notas</label><textarea class="form-input" id="item-notas">${item?.notas || ''}</textarea></div>`;
-            } else if (tab.tipo === 'notas') {
+                    <div class="form-group"><label class="form-label">Monto $</label><input type="number" class="form-input" id="item-monto" value="${item?.monto || ''}" placeholder="0.00"></div>
+                    <div class="form-group"><label class="form-label">Número cuenta/referencia</label><input type="text" class="form-input" id="item-cuenta" value="${item?.cuenta || ''}" placeholder="Opcional"></div>
+                    <div class="form-group"><label class="form-label">Notas</label><textarea class="form-input" id="item-notas" placeholder="Opcional">${item?.notas || ''}</textarea></div>`;
+            } else if (tipo === 'notas') {
                 html = `<h2>${item ? '✏️ Editar' : '➕ Nueva'} Nota</h2>
-                    <div class="form-group"><label class="form-label">Título</label><input type="text" class="form-input" id="item-titulo" value="${item?.titulo || ''}"></div>
-                    <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-input" id="item-desc" style="min-height:150px">${item?.descripcion || ''}</textarea></div>`;
-            } else if (tab.tipo === 'proyectos') {
+                    <div class="form-group"><label class="form-label">Título</label><input type="text" class="form-input" id="item-titulo" value="${item?.titulo || ''}" placeholder="Título de la nota"></div>
+                    <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-input" id="item-desc" style="min-height:150px" placeholder="Escribe aquí...">${item?.descripcion || ''}</textarea></div>`;
+            } else if (tipo === 'proyectos') {
                 html = `<h2>${item ? '✏️ Editar' : '➕ Nuevo'} Proyecto</h2>
-                    <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input" id="item-nombre" value="${item?.nombre || ''}"></div>
-                    <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-input" id="item-desc">${item?.descripcion || ''}</textarea></div>
+                    <div class="form-group"><label class="form-label">Nombre</label><input type="text" class="form-input" id="item-nombre" value="${item?.nombre || ''}" placeholder="Nombre del proyecto"></div>
+                    <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-input" id="item-desc" placeholder="Descripción...">${item?.descripcion || ''}</textarea></div>
                     <div class="form-group"><label class="form-label">Estado</label>
                         <select class="form-select" id="item-estado">
                             <option value="pendiente" ${item?.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
@@ -610,10 +612,14 @@
                             <option value="completado" ${item?.estado === 'completado' ? 'selected' : ''}>Completado</option>
                         </select>
                     </div>`;
-            } else if (tab.tipo === 'tareas') {
+            } else if (tipo === 'tareas') {
                 html = `<h2>${item ? '✏️ Editar' : '➕ Nueva'} Tarea</h2>
-                    <div class="form-group"><label class="form-label">Tarea</label><input type="text" class="form-input" id="item-titulo" value="${item?.titulo || ''}"></div>
+                    <div class="form-group"><label class="form-label">Tarea</label><input type="text" class="form-input" id="item-titulo" value="${item?.titulo || ''}" placeholder="¿Qué necesitas hacer?"></div>
                     <div class="form-group"><label class="form-label">Fecha límite (opcional)</label><input type="date" class="form-input" id="item-fecha" value="${item?.fechaLimite || ''}"></div>`;
+            } else {
+                html = `<h2>➕ Nueva Nota</h2>
+                    <div class="form-group"><label class="form-label">Título</label><input type="text" class="form-input" id="item-titulo" value="" placeholder="Título"></div>
+                    <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-input" id="item-desc" style="min-height:150px" placeholder="Escribe aquí..."></textarea></div>`;
             }
 
             html += `<div class="modal-actions">
@@ -631,9 +637,11 @@
 
         async function guardarItem() {
             const tab = getTabActiva();
+            if (!tab) return;
+            const tipo = tab.tipo || 'notas';
             let data = {tabId: tabActiva, usuarioId: usuario.uid};
 
-            if (tab.tipo === 'pagos') {
+            if (tipo === 'pagos') {
                 data.nombre = document.getElementById('item-nombre').value.trim();
                 data.dia = parseInt(document.getElementById('item-dia').value) || 1;
                 data.monto = document.getElementById('item-monto').value;
@@ -641,21 +649,26 @@
                 data.notas = document.getElementById('item-notas').value.trim();
                 data.icono = '💳';
                 if (!data.nombre) { toast('⚠️ Escribe el nombre'); return; }
-            } else if (tab.tipo === 'notas') {
+            } else if (tipo === 'notas') {
                 data.titulo = document.getElementById('item-titulo').value.trim();
                 data.descripcion = document.getElementById('item-desc').value.trim();
                 data.fecha = new Date().toISOString();
                 if (!data.titulo) { toast('⚠️ Escribe el título'); return; }
-            } else if (tab.tipo === 'proyectos') {
+            } else if (tipo === 'proyectos') {
                 data.nombre = document.getElementById('item-nombre').value.trim();
                 data.descripcion = document.getElementById('item-desc').value.trim();
                 data.estado = document.getElementById('item-estado').value;
                 if (!data.nombre) { toast('⚠️ Escribe el nombre'); return; }
-            } else if (tab.tipo === 'tareas') {
+            } else if (tipo === 'tareas') {
                 data.titulo = document.getElementById('item-titulo').value.trim();
                 data.fechaLimite = document.getElementById('item-fecha').value;
                 data.completada = editandoItem?.completada || false;
                 if (!data.titulo) { toast('⚠️ Escribe la tarea'); return; }
+            } else {
+                data.titulo = document.getElementById('item-titulo').value.trim();
+                data.descripcion = document.getElementById('item-desc')?.value.trim() || '';
+                data.fecha = new Date().toISOString();
+                if (!data.titulo) { toast('⚠️ Escribe el título'); return; }
             }
 
             if (editandoItem) {
