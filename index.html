@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e1b4b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>Mi Agenda Personal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Satisfy&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+        body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#1e1b4b 100%);min-height:100vh;color:#f8fafc}
+        
+        #login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0f0a1e 0%,#1e1b4b 50%,#0f0a1e 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10000;padding:2rem}
+        #login-screen.hidden{display:none}
+        .login-titulo{font-family:'Satisfy',cursive;font-size:2.5rem;margin-bottom:0.5rem;text-shadow:2px 2px 20px rgba(99,102,241,0.5)}
+        .login-subtitulo{color:#a5b4fc;margin-bottom:2rem;font-size:0.95rem}
+        .login-form{width:100%;max-width:320px}
+        .login-input{width:100%;padding:1rem;background:rgba(30,41,59,0.8);border:2px solid rgba(99,102,241,0.3);border-radius:12px;color:#f8fafc;font-size:1rem;margin-bottom:1rem;outline:none}
+        .login-input:focus{border-color:#6366f1}
+        .login-btn{width:100%;padding:1rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:12px;color:white;font-size:1rem;font-weight:700;cursor:pointer}
+        .login-btn:disabled{opacity:0.6}
+        .login-error{color:#f87171;font-size:0.9rem;margin-bottom:1rem;text-align:center;min-height:1.5rem}
+        .login-registro{margin-top:1.5rem;color:#94a3b8;font-size:0.9rem;text-align:center}
+        .login-registro a{color:#a5b4fc;cursor:pointer;text-decoration:underline}
+        
+        #patron-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0f0a1e 0%,#1e1b4b 50%,#0f0a1e 100%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:2rem}
+        #patron-screen.visible{display:flex}
+        .patron-titulo{font-family:'Satisfy',cursive;font-size:2.2rem;margin-bottom:0.5rem}
+        .patron-subtitulo{color:#a5b4fc;margin-bottom:2rem}
+        .patron-mensaje{color:#fbbf24;margin-bottom:1rem;min-height:1.5rem;font-weight:600}
+        .patron-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;padding:1.5rem;background:rgba(30,41,59,0.5);border-radius:24px;border:1px solid rgba(99,102,241,0.2);touch-action:none;position:relative}
+        .patron-punto{width:70px;height:70px;border-radius:50%;background:rgba(99,102,241,0.2);border:3px solid rgba(99,102,241,0.4);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+        .patron-punto.activo{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-color:#a5b4fc;box-shadow:0 0 20px rgba(99,102,241,0.6);transform:scale(1.1)}
+        .patron-punto-centro{width:20px;height:20px;border-radius:50%;background:rgba(165,180,252,0.5)}
+        .patron-punto.activo .patron-punto-centro{background:white}
+        .patron-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+        .btn-patron{padding:0.75rem 1.5rem;border-radius:12px;border:none;font-size:0.9rem;font-weight:600;cursor:pointer;background:rgba(71,85,105,0.5);color:#cbd5e1;margin-top:2rem}
+        
+        #app{display:none;padding:1rem;padding-bottom:120px;max-width:500px;margin:0 auto}
+        #app.visible{display:block}
+        .header{text-align:center;margin-bottom:1rem}
+        .header h1{font-family:'Satisfy',cursive;font-size:2rem;text-shadow:2px 2px 20px rgba(99,102,241,0.5)}
+        .header p{color:#a5b4fc;font-size:0.85rem}
+        .user-info{display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-top:0.25rem;color:#64748b;font-size:0.75rem}
+        .btn-logout{background:none;border:none;color:#f87171;cursor:pointer;font-size:0.75rem;text-decoration:underline}
+        
+        .tabs-wrapper{margin-bottom:1rem}
+        .tabs-scroll{display:flex;gap:0.5rem;overflow-x:auto;padding:0.25rem 0;scrollbar-width:none}
+        .tabs-scroll::-webkit-scrollbar{display:none}
+        .tab{padding:0.5rem 1rem;background:rgba(30,41,59,0.7);border:2px solid rgba(99,102,241,0.2);border-radius:20px;color:#94a3b8;font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:0.4rem;transition:all 0.2s}
+        .tab.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-color:transparent;color:white}
+        .tab .tab-icon{font-size:1rem}
+        .tab-add{padding:0.5rem 0.75rem;background:rgba(34,197,94,0.15);border:2px dashed rgba(34,197,94,0.4);border-radius:20px;color:#4ade80;font-size:1rem;cursor:pointer}
+        .tab-manage{padding:0.5rem 0.75rem;background:rgba(251,191,36,0.15);border:2px solid rgba(251,191,36,0.3);border-radius:20px;color:#fbbf24;font-size:0.9rem;cursor:pointer}
+        
+        .action-bar{display:flex;gap:0.5rem;margin-bottom:1rem}
+        .btn-agregar{flex:1;padding:0.875rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:14px;color:white;font-size:0.95rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem}
+        .btn-voz{width:50px;height:50px;background:linear-gradient(135deg,#ec4899,#f43f5e);border:none;border-radius:14px;color:white;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        .btn-voz.recording{animation:pulse-voz 1s infinite;background:linear-gradient(135deg,#ef4444,#dc2626)}
+        @keyframes pulse-voz{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+        
+        .lista-vacia{text-align:center;padding:2rem 1rem;color:#94a3b8}
+        .lista-vacia .icono{font-size:3rem;margin-bottom:0.5rem;opacity:0.5}
+        
+        .recordatorio{background:linear-gradient(145deg,rgba(30,41,59,0.9),rgba(15,23,42,0.9));border-radius:16px;padding:1rem;margin-bottom:0.75rem;border-left:4px solid;position:relative}
+        .recordatorio.urgente{border-color:#ef4444;box-shadow:0 0 20px rgba(239,68,68,0.2)}
+        .recordatorio.proximo{border-color:#f59e0b}
+        .recordatorio.normal{border-color:#6366f1}
+        .rec-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5rem}
+        .rec-titulo{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:0.5rem}
+        .rec-badge{padding:0.25rem 0.6rem;border-radius:12px;font-size:0.7rem;font-weight:700}
+        .badge-hoy{background:#ef4444}
+        .badge-manana{background:#f59e0b}
+        .badge-pronto{background:#14b8a6}
+        .badge-dias{background:#6366f1}
+        .rec-fecha{color:#94a3b8;font-size:0.8rem;margin-bottom:0.5rem}
+        .rec-cuenta{background:rgba(15,23,42,0.5);padding:0.5rem;border-radius:8px;margin-bottom:0.5rem;cursor:pointer}
+        .rec-cuenta-label{color:#64748b;font-size:0.65rem;font-weight:600}
+        .rec-cuenta-num{color:#e2e8f0;font-family:monospace;font-size:0.85rem}
+        .rec-notas{color:#94a3b8;font-size:0.8rem;font-style:italic;background:rgba(99,102,241,0.1);padding:0.4rem 0.6rem;border-radius:6px;margin-bottom:0.5rem}
+        .rec-actions{display:flex;gap:0.5rem}
+        .rec-btn{padding:0.4rem 0.8rem;border-radius:8px;font-size:0.75rem;font-weight:600;cursor:pointer;border:none}
+        .rec-btn-edit{background:rgba(99,102,241,0.2);color:#a5b4fc}
+        .rec-btn-del{background:rgba(239,68,68,0.15);color:#fca5a5}
+        
+        .modal{position:fixed;inset:0;background:rgba(15,23,42,0.95);display:none;align-items:center;justify-content:center;z-index:5000;padding:1rem}
+        .modal.visible{display:flex}
+        .modal-content{background:linear-gradient(145deg,#1e293b,#0f172a);border-radius:20px;padding:1.25rem;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;border:1px solid rgba(99,102,241,0.2)}
+        .modal h2{font-size:1.2rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+        .form-group{margin-bottom:0.875rem}
+        .form-label{color:#94a3b8;font-size:0.8rem;display:block;margin-bottom:0.3rem;font-weight:600}
+        .form-input{width:100%;padding:0.75rem;background:rgba(30,41,59,0.8);border:2px solid rgba(99,102,241,0.3);border-radius:10px;color:#f8fafc;font-size:0.95rem;outline:none}
+        .form-input:focus{border-color:#6366f1}
+        textarea.form-input{resize:none;min-height:60px}
+        .icon-grid{display:flex;flex-wrap:wrap;gap:0.4rem}
+        .icon-btn{width:40px;height:40px;border-radius:10px;border:2px solid transparent;background:rgba(30,41,59,0.5);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        .icon-btn.active{border-color:#6366f1;background:rgba(99,102,241,0.2)}
+        .color-grid{display:flex;gap:0.4rem}
+        .color-btn{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer}
+        .color-btn.active{border-color:white}
+        .modal-actions{display:flex;gap:0.5rem;margin-top:1rem}
+        .modal-btn{flex:1;padding:0.75rem;border:none;border-radius:10px;font-size:0.95rem;font-weight:600;cursor:pointer}
+        .btn-cancel{background:rgba(71,85,105,0.5);color:#cbd5e1}
+        .btn-save{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white}
+        .btn-delete{background:rgba(239,68,68,0.2);color:#fca5a5}
+        
+        .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e293b;color:#f8fafc;padding:0.6rem 1.2rem;border-radius:10px;font-weight:600;font-size:0.9rem;transition:transform 0.3s;z-index:6000}
+        .toast.visible{transform:translateX(-50%) translateY(0)}
+        
+        .btn-lock{position:fixed;bottom:20px;right:20px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:white;font-size:1.3rem;cursor:pointer;z-index:100}
+        
+        .voz-status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(15,23,42,0.95);padding:2rem;border-radius:20px;text-align:center;display:none;z-index:7000}
+        .voz-status.visible{display:block}
+        .voz-icon{font-size:3rem;margin-bottom:1rem;animation:pulse-voz 1s infinite}
+        .voz-text{color:#f8fafc;font-size:1rem}
+    </style>
+</head>
+<body>
+    <div id="login-screen">
+        <h1 class="login-titulo">🔐 Mi Agenda</h1>
+        <p class="login-subtitulo">Inicia sesión para acceder</p>
+        <div class="login-form">
+            <input type="email" class="login-input" id="login-email" placeholder="Correo electrónico">
+            <input type="password" class="login-input" id="login-password" placeholder="Contraseña">
+            <p class="login-error" id="login-error"></p>
+            <button class="login-btn" onclick="iniciarSesion()">Iniciar sesión</button>
+            <p class="login-registro">¿Primera vez? <a onclick="registrarse()">Crear cuenta</a></p>
+        </div>
+    </div>
+
+    <div id="patron-screen">
+        <h1 class="patron-titulo">🔐 Mi Agenda</h1>
+        <p class="patron-subtitulo" id="patron-modo">Dibuja tu patrón</p>
+        <p class="patron-mensaje" id="patron-mensaje"></p>
+        <div class="patron-grid" id="patron-grid">
+            <canvas class="patron-canvas" id="patron-canvas"></canvas>
+            <div class="patron-punto" data-index="0"><div class="patron-punto-centro"></div></div>
+            <div class="patron-punto" data-index="1"><div class="patron-punto-centro"></div></div>
+            <div class="patron-punto" data-index="2"><div class="patron-punto-centro"></div></div>
+            <div class="patron-punto" data-index="3"><div class="patron-punto-centro"></div></div>
+            <div class="patron-punto" data-index="4"><div class="patron-punto-centro"></div></div>
+            <div class="patron-punto" data-index="5"><div class="patron-punto-centro"></div></div>
+            <div class="patron-punto" data-index="6"><div class="patron-punto-centro"></div></div>
+            <div class="patron-punto" data-index="7"><div class="patron-punto-centro"></div></div>
+            <div class="patron-punto" data-index="8"><div class="patron-punto-centro"></div></div>
+        </div>
+        <button class="btn-patron" onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+
+    <div id="app">
+        <div class="header">
+            <h1>Mi Agenda</h1>
+            <p id="fecha-hoy"></p>
+            <div class="user-info"><span id="user-email"></span> <button class="btn-logout" onclick="cerrarSesion()">Salir</button></div>
+        </div>
+
+        <div class="tabs-wrapper">
+            <div class="tabs-scroll" id="tabs-container"></div>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn-agregar" onclick="abrirModalRecordatorio()">➕ Agregar</button>
+            <button class="btn-voz" id="btn-voz" onclick="iniciarVoz()">🎤</button>
+        </div>
+
+        <div id="lista-recordatorios"></div>
+        <button class="btn-lock" onclick="bloquearApp()">🔒</button>
+    </div>
+
+    <!-- Modal Recordatorio -->
+    <div class="modal" id="modal-rec">
+        <div class="modal-content">
+            <h2 id="modal-rec-titulo">➕ Nuevo</h2>
+            <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-input" id="rec-nombre" placeholder="Ej: Pagar luz">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Día del mes</label>
+                <input type="number" class="form-input" id="rec-dia" min="1" max="31" value="1">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Número cuenta/referencia (opcional)</label>
+                <input type="text" class="form-input" id="rec-cuenta" placeholder="Ej: 4152 xxxx">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Notas (opcional)</label>
+                <textarea class="form-input" id="rec-notas" placeholder="Ej: Pagar en OXXO"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Icono</label>
+                <div class="icon-grid" id="icon-grid"></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Color</label>
+                <div class="color-grid" id="color-grid"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" onclick="cerrarModalRec()">Cancelar</button>
+                <button class="modal-btn btn-save" onclick="guardarRecordatorio()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pestaña -->
+    <div class="modal" id="modal-tab">
+        <div class="modal-content">
+            <h2 id="modal-tab-titulo">📑 Nueva pestaña</h2>
+            <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-input" id="tab-nombre" placeholder="Ej: Trabajo">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Icono</label>
+                <div class="icon-grid" id="tab-icon-grid"></div>
+            </div>
+            <div class="modal-actions" id="modal-tab-actions">
+                <button class="modal-btn btn-cancel" onclick="cerrarModalTab()">Cancelar</button>
+                <button class="modal-btn btn-save" onclick="guardarTab()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="voz-status" id="voz-status">
+        <div class="voz-icon">🎤</div>
+        <p class="voz-text">Escuchando...</p>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAiFwURHHCwGg6_3scyUxO43ib6kH-y8AM",
+            authDomain: "agenda-pendientes-y-proyectos.firebaseapp.com",
+            projectId: "agenda-pendientes-y-proyectos",
+            storageBucket: "agenda-pendientes-y-proyectos.firebasestorage.app",
+            messagingSenderId: "534286151036",
+            appId: "1:534286151036:web:2114bf9b316ae7262688f9"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const iconos = ['💳','💡','📱','🌐','🏠','🚗','📺','🎮','💊','📦','🛒','⚡','💼','📋','🎯','💰','📅','✈️','🍔','👕','🏥','📚'];
+        const colores = ['#6366f1','#ec4899','#14b8a6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#84cc16'];
+        const tabIconos = ['💳','📋','💼','🎯','🏠','📚','🛒','💰','🚗','✈️','🍔','💊'];
+        
+        let usuario = null;
+        let tabs = [];
+        let tabActiva = null;
+        let recordatorios = [];
+        let editandoRec = null;
+        let editandoTab = null;
+        let iconoSel = '💳';
+        let colorSel = '#6366f1';
+        let tabIconoSel = '📋';
+
+        // AUTH
+        auth.onAuthStateChanged(u => {
+            if (u) { usuario = u; document.getElementById('login-screen').classList.add('hidden'); document.getElementById('user-email').textContent = u.email; initPatron(); }
+            else { usuario = null; document.getElementById('login-screen').classList.remove('hidden'); document.getElementById('patron-screen').classList.remove('visible'); document.getElementById('app').classList.remove('visible'); }
+        });
+
+        async function iniciarSesion() {
+            const e = document.getElementById('login-email').value.trim(), p = document.getElementById('login-password').value;
+            if (!e || !p) { document.getElementById('login-error').textContent = 'Completa los campos'; return; }
+            try { await auth.signInWithEmailAndPassword(e, p); } 
+            catch (err) { document.getElementById('login-error').textContent = err.code === 'auth/user-not-found' ? 'Usuario no existe' : 'Contraseña incorrecta'; }
+        }
+
+        async function registrarse() {
+            const e = document.getElementById('login-email').value.trim(), p = document.getElementById('login-password').value;
+            if (!e || !p) { document.getElementById('login-error').textContent = 'Completa los campos'; return; }
+            if (p.length < 6) { document.getElementById('login-error').textContent = 'Mínimo 6 caracteres'; return; }
+            document.getElementById('login-error').textContent = 'Creando...';
+            try { await auth.createUserWithEmailAndPassword(e, p); } 
+            catch (err) { document.getElementById('login-error').textContent = err.code === 'auth/email-already-in-use' ? 'Correo ya existe' : 'Error'; }
+        }
+
+        function cerrarSesion() { auth.signOut(); }
+
+        // PATRON
+        let patronGuardado = localStorage.getItem('patron_agenda'), patronActual = [], dibujando = false, modoConfig = !patronGuardado, patronTemp = null, patronCtx;
+        const puntos = document.querySelectorAll('.patron-punto'), patronGrid = document.getElementById('patron-grid'), patronCanvas = document.getElementById('patron-canvas');
+
+        function initPatron() {
+            document.getElementById('patron-screen').classList.add('visible');
+            setTimeout(() => { const r = patronGrid.getBoundingClientRect(); patronCanvas.width = r.width; patronCanvas.height = r.height; patronCtx = patronCanvas.getContext('2d'); }, 100);
+            patronGuardado = localStorage.getItem('patron_agenda'); modoConfig = !patronGuardado; patronTemp = null;
+            document.getElementById('patron-modo').textContent = modoConfig ? 'Crea tu patrón (4+ puntos)' : 'Dibuja tu patrón';
+            document.getElementById('patron-mensaje').textContent = modoConfig ? 'Conecta al menos 4 puntos' : '';
+            patronGrid.onmousedown = patronGrid.ontouchstart = startDraw;
+            patronGrid.onmousemove = patronGrid.ontouchmove = moveDraw;
+            patronGrid.onmouseup = patronGrid.ontouchend = patronGrid.onmouseleave = endDraw;
+        }
+
+        function getCoords(e) { const r = patronGrid.getBoundingClientRect(); return e.touches ? {x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top} : {x: e.clientX - r.left, y: e.clientY - r.top}; }
+        function getPunto(x, y) { for (let p of puntos) { const r = p.getBoundingClientRect(), gr = patronGrid.getBoundingClientRect(); if (Math.sqrt((x-(r.left-gr.left+r.width/2))**2 + (y-(r.top-gr.top+r.height/2))**2) < 40) return parseInt(p.dataset.index); } return -1; }
+        function getCentro(i) { const p = puntos[i], r = p.getBoundingClientRect(), gr = patronGrid.getBoundingClientRect(); return {x: r.left-gr.left+r.width/2, y: r.top-gr.top+r.height/2}; }
+        function startDraw(e) { e.preventDefault(); dibujando = true; patronActual = []; if(patronCtx) patronCtx.clearRect(0,0,patronCanvas.width,patronCanvas.height); puntos.forEach(p => p.classList.remove('activo')); const c = getCoords(e), pt = getPunto(c.x, c.y); if (pt >= 0) { patronActual.push(pt); puntos[pt].classList.add('activo'); } }
+        function moveDraw(e) { if (!dibujando) return; e.preventDefault(); const c = getCoords(e), pt = getPunto(c.x, c.y); if (pt >= 0 && !patronActual.includes(pt)) { patronActual.push(pt); puntos[pt].classList.add('activo'); } drawLines(c); }
+        function endDraw() { if (!dibujando) return; dibujando = false; drawLines(); validatePatron(); }
+        function drawLines(cur=null) { if(!patronCtx) return; patronCtx.clearRect(0,0,patronCanvas.width,patronCanvas.height); if(!patronActual.length) return; patronCtx.strokeStyle='#6366f1'; patronCtx.lineWidth=4; patronCtx.lineCap='round'; patronCtx.beginPath(); const s=getCentro(patronActual[0]); patronCtx.moveTo(s.x,s.y); for(let i=1;i<patronActual.length;i++){const c=getCentro(patronActual[i]);patronCtx.lineTo(c.x,c.y);} if(cur&&dibujando)patronCtx.lineTo(cur.x,cur.y); patronCtx.stroke(); }
+        
+        function validatePatron() {
+            const msg = document.getElementById('patron-mensaje');
+            if (modoConfig) {
+                if (patronActual.length >= 4) {
+                    if (!patronTemp) { patronTemp = patronActual.join('-'); msg.textContent = '✓ Dibújalo de nuevo'; msg.style.color = '#4ade80'; setTimeout(() => { patronActual = []; if(patronCtx) patronCtx.clearRect(0,0,patronCanvas.width,patronCanvas.height); puntos.forEach(p => p.classList.remove('activo')); }, 1000); }
+                    else if (patronActual.join('-') === patronTemp) { localStorage.setItem('patron_agenda', patronTemp); msg.textContent = '✓ ¡Guardado!'; msg.style.color = '#4ade80'; setTimeout(unlock, 500); }
+                    else { msg.textContent = '✗ No coinciden'; msg.style.color = '#f87171'; patronTemp = null; setTimeout(() => { patronActual = []; if(patronCtx) patronCtx.clearRect(0,0,patronCanvas.width,patronCanvas.height); puntos.forEach(p => p.classList.remove('activo')); msg.textContent = 'Conecta al menos 4 puntos'; msg.style.color = '#fbbf24'; }, 1500); }
+                } else { msg.textContent = 'Mínimo 4 puntos'; msg.style.color = '#fbbf24'; }
+            } else {
+                if (patronActual.join('-') === patronGuardado) { msg.textContent = '✓ Desbloqueado'; msg.style.color = '#4ade80'; setTimeout(unlock, 300); }
+                else { msg.textContent = '✗ Incorrecto'; msg.style.color = '#f87171'; setTimeout(() => { patronActual = []; if(patronCtx) patronCtx.clearRect(0,0,patronCanvas.width,patronCanvas.height); puntos.forEach(p => p.classList.remove('activo')); msg.textContent = ''; }, 1000); }
+            }
+        }
+
+        function unlock() { document.getElementById('patron-screen').classList.remove('visible'); document.getElementById('app').classList.add('visible'); cargarTabs(); mostrarFecha(); }
+        function bloquearApp() { document.getElementById('patron-screen').classList.add('visible'); document.getElementById('app').classList.remove('visible'); patronActual = []; if(patronCtx) patronCtx.clearRect(0,0,patronCanvas.width,patronCanvas.height); puntos.forEach(p => p.classList.remove('activo')); document.getElementById('patron-mensaje').textContent = ''; }
+
+        // TABS
+        async function cargarTabs() {
+            if (!usuario) return;
+            const snap = await db.collection('tabs').where('usuarioId', '==', usuario.uid).orderBy('orden').get();
+            tabs = []; snap.forEach(d => tabs.push({id: d.id, ...d.data()}));
+            if (tabs.length === 0) {
+                const defaultTabs = [{nombre: 'Pagos', icono: '💳', orden: 0}, {nombre: 'Diario', icono: '📋', orden: 1}, {nombre: 'Proyectos', icono: '💼', orden: 2}];
+                for (const t of defaultTabs) { await db.collection('tabs').add({...t, usuarioId: usuario.uid}); }
+                return cargarTabs();
+            }
+            tabActiva = tabs[0].id;
+            renderTabs();
+            cargarRecordatorios();
+        }
+
+        function renderTabs() {
+            const cont = document.getElementById('tabs-container');
+            cont.innerHTML = tabs.map(t => `<button class="tab ${t.id === tabActiva ? 'active' : ''}" onclick="seleccionarTab('${t.id}')" oncontextmenu="event.preventDefault();editarTab('${t.id}')"><span class="tab-icon">${t.icono}</span>${t.nombre}</button>`).join('') +
+                `<button class="tab-add" onclick="abrirModalTab()">➕</button>` +
+                `<button class="tab-manage" onclick="editarTabActiva()">✏️</button>`;
+        }
+
+        function seleccionarTab(id) { tabActiva = id; renderTabs(); cargarRecordatorios(); }
+        
+        function abrirModalTab(tab = null) {
+            editandoTab = tab;
+            document.getElementById('modal-tab-titulo').textContent = tab ? '✏️ Editar pestaña' : '📑 Nueva pestaña';
+            document.getElementById('tab-nombre').value = tab ? tab.nombre : '';
+            tabIconoSel = tab ? tab.icono : '📋';
+            renderTabIconos();
+            const actions = document.getElementById('modal-tab-actions');
+            actions.innerHTML = `<button class="modal-btn btn-cancel" onclick="cerrarModalTab()">Cancelar</button>` +
+                (tab ? `<button class="modal-btn btn-delete" onclick="eliminarTab()">🗑️ Eliminar</button>` : '') +
+                `<button class="modal-btn btn-save" onclick="guardarTab()">Guardar</button>`;
+            document.getElementById('modal-tab').classList.add('visible');
+        }
+
+        function cerrarModalTab() { document.getElementById('modal-tab').classList.remove('visible'); editandoTab = null; }
+        
+        function editarTabActiva() { const t = tabs.find(x => x.id === tabActiva); if (t) abrirModalTab(t); }
+        function editarTab(id) { const t = tabs.find(x => x.id === id); if (t) abrirModalTab(t); }
+
+        function renderTabIconos() {
+            document.getElementById('tab-icon-grid').innerHTML = tabIconos.map(i => `<button type="button" class="icon-btn ${i === tabIconoSel ? 'active' : ''}" onclick="tabIconoSel='${i}';renderTabIconos()">${i}</button>`).join('');
+        }
+
+        async function guardarTab() {
+            const nombre = document.getElementById('tab-nombre').value.trim();
+            if (!nombre) { toast('⚠️ Escribe un nombre'); return; }
+            if (editandoTab) {
+                await db.collection('tabs').doc(editandoTab.id).update({nombre, icono: tabIconoSel});
+            } else {
+                await db.collection('tabs').add({nombre, icono: tabIconoSel, orden: tabs.length, usuarioId: usuario.uid});
+            }
+            cerrarModalTab(); cargarTabs(); toast('✓ Guardado');
+        }
+
+        async function eliminarTab() {
+            if (tabs.length <= 1) { toast('⚠️ Necesitas al menos 1 pestaña'); return; }
+            if (!confirm('¿Eliminar pestaña y todos sus recordatorios?')) return;
+            const recs = await db.collection('recordatorios').where('tabId', '==', editandoTab.id).get();
+            const batch = db.batch();
+            recs.forEach(d => batch.delete(d.ref));
+            batch.delete(db.collection('tabs').doc(editandoTab.id));
+            await batch.commit();
+            cerrarModalTab(); cargarTabs(); toast('✓ Eliminado');
+        }
+
+        // RECORDATORIOS
+        async function cargarRecordatorios() {
+            if (!usuario || !tabActiva) return;
+            const snap = await db.collection('recordatorios').where('tabId', '==', tabActiva).get();
+            recordatorios = []; snap.forEach(d => recordatorios.push({id: d.id, ...d.data()}));
+            renderRecordatorios();
+        }
+
+        function diasRestantes(dia) { const h = new Date(), d = h.getDate(), m = h.getMonth(), a = h.getFullYear(); let f = new Date(a, m, dia); if (dia <= d) f = new Date(a, m + 1, dia); return Math.ceil((f - h) / (1000*60*60*24)); }
+
+        function renderRecordatorios() {
+            const lista = document.getElementById('lista-recordatorios');
+            if (!recordatorios.length) { lista.innerHTML = '<div class="lista-vacia"><div class="icono">📋</div><p>Sin recordatorios</p></div>'; return; }
+            const ord = [...recordatorios].sort((a,b) => diasRestantes(a.diaMes) - diasRestantes(b.diaMes));
+            lista.innerHTML = ord.map(r => {
+                const dr = diasRestantes(r.diaMes);
+                let badge = '', clase = 'normal';
+                if (dr === 0) { badge = '<span class="rec-badge badge-hoy">¡HOY!</span>'; clase = 'urgente'; }
+                else if (dr === 1) { badge = '<span class="rec-badge badge-manana">MAÑANA</span>'; clase = 'proximo'; }
+                else if (dr <= 3) { badge = `<span class="rec-badge badge-pronto">${dr} días</span>`; clase = 'proximo'; }
+                else { badge = `<span class="rec-badge badge-dias">${dr} días</span>`; }
+                return `<div class="recordatorio ${clase}" style="border-color:${r.color}">
+                    <div class="rec-header"><span class="rec-titulo">${r.icono} ${r.nombre}</span>${badge}</div>
+                    <div class="rec-fecha">📅 Día ${r.diaMes} de cada mes</div>
+                    ${r.numeroCuenta ? `<div class="rec-cuenta" onclick="copiar('${r.numeroCuenta}')"><div class="rec-cuenta-label">CUENTA</div><div class="rec-cuenta-num">${r.numeroCuenta} 📋</div></div>` : ''}
+                    ${r.notas ? `<div class="rec-notas">💡 ${r.notas}</div>` : ''}
+                    <div class="rec-actions"><button class="rec-btn rec-btn-edit" onclick='editarRec(${JSON.stringify(r).replace(/'/g, "\\'")})'>✏️ Editar</button><button class="rec-btn rec-btn-del" onclick="eliminarRec('${r.id}')">🗑️</button></div>
+                </div>`;
+            }).join('');
+        }
+
+        function abrirModalRecordatorio(rec = null) {
+            editandoRec = rec;
+            document.getElementById('modal-rec-titulo').textContent = rec ? '✏️ Editar' : '➕ Nuevo';
+            document.getElementById('rec-nombre').value = rec ? rec.nombre : '';
+            document.getElementById('rec-dia').value = rec ? rec.diaMes : new Date().getDate();
+            document.getElementById('rec-cuenta').value = rec ? (rec.numeroCuenta || '') : '';
+            document.getElementById('rec-notas').value = rec ? (rec.notas || '') : '';
+            iconoSel = rec ? rec.icono : '💳';
+            colorSel = rec ? rec.color : '#6366f1';
+            renderIconos(); renderColores();
+            document.getElementById('modal-rec').classList.add('visible');
+        }
+
+        function cerrarModalRec() { document.getElementById('modal-rec').classList.remove('visible'); editandoRec = null; }
+        function editarRec(r) { abrirModalRecordatorio(r); }
+
+        function renderIconos() { document.getElementById('icon-grid').innerHTML = iconos.map(i => `<button type="button" class="icon-btn ${i === iconoSel ? 'active' : ''}" onclick="iconoSel='${i}';renderIconos()">${i}</button>`).join(''); }
+        function renderColores() { document.getElementById('color-grid').innerHTML = colores.map(c => `<button type="button" class="color-btn ${c === colorSel ? 'active' : ''}" style="background:${c}" onclick="colorSel='${c}';renderColores()"></button>`).join(''); }
+
+        async function guardarRecordatorio() {
+            const nombre = document.getElementById('rec-nombre').value.trim();
+            if (!nombre) { toast('⚠️ Escribe un nombre'); return; }
+            const data = {
+                nombre,
+                diaMes: parseInt(document.getElementById('rec-dia').value) || 1,
+                numeroCuenta: document.getElementById('rec-cuenta').value.trim(),
+                notas: document.getElementById('rec-notas').value.trim(),
+                icono: iconoSel,
+                color: colorSel,
+                tabId: tabActiva,
+                usuarioId: usuario.uid
+            };
+            if (editandoRec) { await db.collection('recordatorios').doc(editandoRec.id).update(data); }
+            else { await db.collection('recordatorios').add(data); }
+            cerrarModalRec(); cargarRecordatorios(); toast('✓ Guardado');
+        }
+
+        async function eliminarRec(id) { if (!confirm('¿Eliminar?')) return; await db.collection('recordatorios').doc(id).delete(); cargarRecordatorios(); toast('✓ Eliminado'); }
+
+        // VOZ
+        let recognition = null;
+        function iniciarVoz() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { toast('⚠️ Tu navegador no soporta voz'); return; }
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SR();
+            recognition.lang = 'es-MX';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            document.getElementById('btn-voz').classList.add('recording');
+            document.getElementById('voz-status').classList.add('visible');
+            
+            recognition.onresult = (e) => {
+                const texto = e.results[0][0].transcript;
+                document.getElementById('rec-nombre').value = texto;
+                abrirModalRecordatorio();
+                cerrarVoz();
+            };
+            recognition.onerror = () => { cerrarVoz(); toast('⚠️ No se entendió'); };
+            recognition.onend = () => { cerrarVoz(); };
+            recognition.start();
+        }
+
+        function cerrarVoz() {
+            document.getElementById('btn-voz').classList.remove('recording');
+            document.getElementById('voz-status').classList.remove('visible');
+            if (recognition) recognition.stop();
+        }
+
+        // UTILS
+        function copiar(t) { navigator.clipboard.writeText(t); toast('📋 Copiado'); }
+        function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2500); }
+        function mostrarFecha() { document.getElementById('fecha-hoy').textContent = '📅 ' + new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'}); }
+
+        document.getElementById('login-password').onkeypress = e => { if (e.key === 'Enter') iniciarSesion(); };
+    </script>
+</body>
+</html>
