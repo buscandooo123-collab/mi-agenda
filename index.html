@@ -493,6 +493,18 @@
                 return cargarTabs();
             }
             
+            // Arreglar tabs sin tipo
+            for (const t of tabs) {
+                if (!t.tipo) {
+                    let tipo = 'notas';
+                    if (t.nombre.toLowerCase().includes('pago') || t.nombre.toLowerCase().includes('fecha')) tipo = 'pagos';
+                    else if (t.nombre.toLowerCase().includes('proyecto')) tipo = 'proyectos';
+                    else if (t.nombre.toLowerCase().includes('tarea') || t.nombre.toLowerCase().includes('pendiente')) tipo = 'tareas';
+                    await db.collection('tabs').doc(t.id).update({tipo: tipo});
+                    t.tipo = tipo;
+                }
+            }
+            
             tabs.sort((a, b) => (a.orden || 0) - (b.orden || 0));
             if (!tabActiva) tabActiva = tabs[0].id;
             renderSidebar();
