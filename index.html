@@ -485,10 +485,8 @@
             snap.forEach(d => tabs.push({id: d.id, ...d.data()}));
             
             if (tabs.length === 0) {
-                // Crear tabs por defecto
-                await db.collection('tabs').add({nombre: 'Pagos', icono: '💳', tipo: 'pagos', orden: 0, usuarioId: usuario.uid});
-                await db.collection('tabs').add({nombre: 'Notas', icono: '📋', tipo: 'notas', orden: 1, usuarioId: usuario.uid});
-                await db.collection('tabs').add({nombre: 'Proyectos', icono: '💼', tipo: 'proyectos', orden: 2, usuarioId: usuario.uid});
+                // Crear tab por defecto
+                await db.collection('tabs').add({nombre: 'Fecha de Pago', icono: '💳', tipo: 'pagos', orden: 0, usuarioId: usuario.uid});
                 return cargarTabs();
             }
             
