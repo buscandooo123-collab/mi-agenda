@@ -44,6 +44,7 @@
         
         .topbar{display:flex;align-items:center;padding:1rem;background:rgba(15,23,42,0.8);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100}
         .menu-btn{width:44px;height:44px;background:none;border:none;color:#f8fafc;font-size:1.5rem;cursor:pointer;border-radius:12px}
+        .back-btn{width:44px;height:44px;background:none;border:none;color:#f8fafc;font-size:1.5rem;cursor:pointer;border-radius:12px}
         .topbar-title{flex:1;text-align:center;font-family:'Satisfy',cursive;font-size:1.8rem}
         .lock-btn{width:44px;height:44px;background:none;border:none;color:#f8fafc;font-size:1.3rem;cursor:pointer;border-radius:12px}
         
@@ -60,15 +61,44 @@
         .sidebar-item.active{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
         .sidebar-item .icon{font-size:1.3rem}
         .sidebar-item .name{flex:1;font-weight:600}
-        .sidebar-item .tipo-tag{font-size:0.65rem;background:rgba(255,255,255,0.2);padding:0.15rem 0.4rem;border-radius:6px}
+        .sidebar-item .count{background:rgba(239,68,68,0.8);padding:0.15rem 0.5rem;border-radius:10px;font-size:0.7rem;font-weight:700}
         .sidebar-divider{height:1px;background:rgba(99,102,241,0.2);margin:1rem 0}
         .sidebar-item.add{border:2px dashed rgba(34,197,94,0.4);color:#4ade80}
         .sidebar-footer{padding:1rem;border-top:1px solid rgba(99,102,241,0.2)}
         .sidebar-footer p{color:#64748b;font-size:0.75rem;text-align:center}
         
         .content{padding:1rem;padding-bottom:100px}
-        .content-header{margin-bottom:1rem}
-        .content-header h1{font-size:1.5rem;display:flex;align-items:center;gap:0.5rem}
+        
+        /* INICIO */
+        .inicio-header{text-align:center;margin-bottom:2rem}
+        .inicio-header h1{font-family:'Satisfy',cursive;font-size:2.2rem;margin-bottom:0.5rem}
+        .inicio-header p{color:#a5b4fc;font-size:0.9rem}
+        
+        .pendientes-grid{display:flex;flex-direction:column;gap:1rem}
+        
+        .pendiente-card{background:linear-gradient(145deg,rgba(30,41,59,0.9),rgba(15,23,42,0.9));border-radius:20px;padding:1.5rem;cursor:pointer;transition:all 0.3s;border:2px solid rgba(99,102,241,0.3)}
+        .pendiente-card:hover{transform:translateY(-2px);border-color:rgba(99,102,241,0.6)}
+        .pendiente-card:active{transform:scale(0.98)}
+        .pendiente-card-header{display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem}
+        .pendiente-card-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem}
+        .pendiente-card-icon.pagos{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+        .pendiente-card-icon.notas{background:linear-gradient(135deg,#ec4899,#f43f5e)}
+        .pendiente-card-icon.proyectos{background:linear-gradient(135deg,#8b5cf6,#a855f7)}
+        .pendiente-card-icon.tareas{background:linear-gradient(135deg,#22c55e,#16a34a)}
+        .pendiente-card-info{flex:1}
+        .pendiente-card-name{font-size:1.2rem;font-weight:700}
+        .pendiente-card-count{color:#fbbf24;font-size:0.9rem;font-weight:600}
+        .pendiente-card-arrow{color:#64748b;font-size:1.5rem}
+        
+        .todo-bien{text-align:center;padding:3rem 1rem;color:#64748b}
+        .todo-bien .icon{font-size:4rem;margin-bottom:1rem}
+        .todo-bien p{font-size:1.1rem}
+        
+        .ver-todas-btn{display:block;text-align:center;padding:1rem;color:#a5b4fc;font-weight:600;cursor:pointer;margin-top:1rem}
+        
+        /* DETALLE */
+        .detalle-header{margin-bottom:1rem}
+        .detalle-header h1{font-size:1.5rem;display:flex;align-items:center;gap:0.5rem}
         
         .stats-bar{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem}
         .stat-card{background:rgba(30,41,59,0.8);border-radius:16px;padding:1rem;border:1px solid rgba(99,102,241,0.2)}
@@ -77,7 +107,8 @@
         .stat-label{color:#94a3b8;font-size:0.75rem;margin-bottom:0.25rem}
         .stat-value{font-size:1.4rem;font-weight:800}
         
-        .btn-add{position:fixed;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:50%;color:white;font-size:1.8rem;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.5);z-index:50}
+        .btn-add{position:fixed;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:50%;color:white;font-size:1.8rem;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.5);z-index:50;display:none}
+        .btn-add.visible{display:flex;align-items:center;justify-content:center}
         
         .item-list{display:flex;flex-direction:column;gap:0.75rem}
         .item-empty{text-align:center;padding:3rem 1rem;color:#64748b}
@@ -187,8 +218,9 @@
 
     <div id="app">
         <div class="topbar">
-            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-            <span class="topbar-title">Mi Agenda</span>
+            <button class="menu-btn" id="menu-btn" onclick="toggleSidebar()">☰</button>
+            <button class="back-btn" id="back-btn" onclick="volverInicio()" style="display:none">←</button>
+            <span class="topbar-title" id="topbar-title">Mi Agenda</span>
             <button class="lock-btn" onclick="bloquearApp()">🔒</button>
         </div>
         <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -203,7 +235,7 @@
             </div>
         </div>
         <div class="content" id="content"></div>
-        <button class="btn-add" onclick="abrirModalItem()">+</button>
+        <button class="btn-add" id="btn-add" onclick="abrirModalItem()">+</button>
     </div>
 
     <div class="modal" id="modal-item">
@@ -258,8 +290,9 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        let usuario = null, tabs = [], tabActiva = null, items = [], editandoItem = null, editandoTab = null;
+        let usuario = null, tabs = [], tabActiva = null, items = [], allItems = [], editandoItem = null, editandoTab = null;
         let tabIconoSel = '💳', tabTipoSel = 'pagos';
+        let vistaActual = 'inicio'; // 'inicio' o 'detalle'
         const iconosTabs = ['💳','📋','💼','✅','🏠','🚗','💰','📚','🎯','🛒','💊','📱'];
         const tiposDisponibles = [
             {id: 'pagos', nombre: 'Pagos', icono: '💳'},
@@ -454,7 +487,7 @@
             document.getElementById('patron-screen').classList.remove('visible');
             document.getElementById('app').classList.add('visible');
             mostrarFecha();
-            cargarTabs();
+            cargarTodo();
         }
 
         function bloquearApp() {
@@ -478,48 +511,66 @@
             document.querySelector('.sidebar-overlay').classList.remove('visible');
         }
 
-        // TABS
-        async function cargarTabs() {
-            const snap = await db.collection('tabs').where('usuarioId', '==', usuario.uid).get();
+        // CARGAR TODO
+        async function cargarTodo() {
+            // Cargar tabs
+            const snapTabs = await db.collection('tabs').where('usuarioId', '==', usuario.uid).get();
             tabs = [];
-            snap.forEach(d => tabs.push({id: d.id, ...d.data()}));
+            snapTabs.forEach(d => tabs.push({id: d.id, ...d.data()}));
             
             if (tabs.length === 0) {
-                // Crear tabs por defecto
-                await db.collection('tabs').add({nombre: 'Fecha de Pago', icono: '💳', tipo: 'pagos', orden: 0, usuarioId: usuario.uid});
+                await db.collection('tabs').add({nombre: 'Pagos', icono: '💳', tipo: 'pagos', orden: 0, usuarioId: usuario.uid});
                 await db.collection('tabs').add({nombre: 'Notas', icono: '📋', tipo: 'notas', orden: 1, usuarioId: usuario.uid});
                 await db.collection('tabs').add({nombre: 'Proyectos', icono: '💼', tipo: 'proyectos', orden: 2, usuarioId: usuario.uid});
                 await db.collection('tabs').add({nombre: 'Tareas', icono: '✅', tipo: 'tareas', orden: 3, usuarioId: usuario.uid});
-                return cargarTabs();
+                return cargarTodo();
             }
             
             // Arreglar tabs sin tipo
             for (const t of tabs) {
                 if (!t.tipo) {
                     let tipo = 'notas';
-                    if (t.nombre.toLowerCase().includes('pago') || t.nombre.toLowerCase().includes('fecha')) tipo = 'pagos';
+                    if (t.nombre.toLowerCase().includes('pago')) tipo = 'pagos';
                     else if (t.nombre.toLowerCase().includes('proyecto')) tipo = 'proyectos';
-                    else if (t.nombre.toLowerCase().includes('tarea') || t.nombre.toLowerCase().includes('pendiente')) tipo = 'tareas';
+                    else if (t.nombre.toLowerCase().includes('tarea')) tipo = 'tareas';
                     await db.collection('tabs').doc(t.id).update({tipo: tipo});
                     t.tipo = tipo;
                 }
             }
             
             tabs.sort((a, b) => (a.orden || 0) - (b.orden || 0));
-            if (!tabActiva) tabActiva = tabs[0].id;
+            
+            // Cargar todos los items
+            const snapItems = await db.collection('items').where('usuarioId', '==', usuario.uid).get();
+            allItems = [];
+            snapItems.forEach(d => allItems.push({id: d.id, ...d.data()}));
+            
             renderSidebar();
-            cargarItems();
+            mostrarInicio();
+        }
+
+        function contarPendientes(tabId, tipo) {
+            const itemsTab = allItems.filter(i => i.tabId === tabId);
+            if (tipo === 'pagos') {
+                return itemsTab.filter(i => !i.pagadoEsteMes).length;
+            } else if (tipo === 'tareas') {
+                return itemsTab.filter(i => !i.completada).length;
+            } else if (tipo === 'proyectos') {
+                return itemsTab.filter(i => i.estado !== 'completado').length;
+            } else {
+                return itemsTab.length;
+            }
         }
 
         function renderSidebar() {
             const menu = document.getElementById('sidebar-menu');
             let html = '';
             for (const t of tabs) {
-                const tipoNombre = tiposDisponibles.find(x => x.id === t.tipo)?.nombre || 'Sin tipo';
-                html += `<div class="sidebar-item ${t.id === tabActiva ? 'active' : ''}" onclick="selTab('${t.id}')">
+                const count = contarPendientes(t.id, t.tipo);
+                html += `<div class="sidebar-item" onclick="abrirTab('${t.id}')">
                     <span class="icon">${t.icono}</span>
                     <span class="name">${t.nombre}</span>
-                    <span class="tipo-tag">${tipoNombre}</span>
+                    ${count > 0 ? `<span class="count">${count}</span>` : ''}
                 </div>`;
             }
             html += `<div class="sidebar-divider"></div>
@@ -530,120 +581,79 @@
             menu.innerHTML = html;
         }
 
-        function selTab(id) {
-            tabActiva = id;
-            renderSidebar();
-            cargarItems();
-            closeSidebar();
-        }
-
-        // MODAL TAB
-        function abrirModalTab(tab = null) {
-            editandoTab = tab;
-            document.getElementById('modal-tab-titulo').textContent = tab ? '✏️ Editar' : '📁 Nueva Categoría';
-            document.getElementById('tab-nombre').value = tab ? tab.nombre : '';
-            tabIconoSel = tab ? tab.icono : '💳';
-            tabTipoSel = tab ? (tab.tipo || 'notas') : 'pagos';
-            renderTabIconos();
-            renderTiposBtns();
+        // VISTAS
+        function mostrarInicio() {
+            vistaActual = 'inicio';
+            tabActiva = null;
+            document.getElementById('menu-btn').style.display = 'block';
+            document.getElementById('back-btn').style.display = 'none';
+            document.getElementById('topbar-title').textContent = 'Mi Agenda';
+            document.getElementById('btn-add').classList.remove('visible');
             
-            let actionsHtml = `<button class="modal-btn btn-cancel" onclick="cerrarModalTab()">Cancelar</button>`;
-            if (tab) actionsHtml += `<button class="modal-btn btn-delete" onclick="eliminarTab()">🗑️</button>`;
-            actionsHtml += `<button class="modal-btn btn-save" onclick="guardarTab()">Guardar</button>`;
-            document.getElementById('modal-tab-actions').innerHTML = actionsHtml;
+            // Filtrar tabs con pendientes
+            const tabsConPendientes = tabs.filter(t => contarPendientes(t.id, t.tipo) > 0);
             
-            document.getElementById('modal-tab').classList.add('visible');
-            closeSidebar();
-        }
-
-        function cerrarModalTab() {
-            document.getElementById('modal-tab').classList.remove('visible');
-        }
-
-        function renderTabIconos() {
-            document.getElementById('tab-icon-grid').innerHTML = iconosTabs.map(i => 
-                `<button type="button" class="icon-btn ${i === tabIconoSel ? 'active' : ''}" onclick="selTabIcono('${i}')">${i}</button>`
-            ).join('');
-        }
-
-        function selTabIcono(i) {
-            tabIconoSel = i;
-            renderTabIconos();
-        }
-
-        function renderTiposBtns() {
-            document.getElementById('tipo-grid').innerHTML = tiposDisponibles.map(t =>
-                `<div class="tipo-btn ${t.id === tabTipoSel ? 'active' : ''}" onclick="selTipo('${t.id}')">
-                    <div class="icon">${t.icono}</div>
-                    <div class="name">${t.nombre}</div>
-                </div>`
-            ).join('');
-        }
-
-        function selTipo(t) {
-            tabTipoSel = t;
-            renderTiposBtns();
-        }
-
-        async function guardarTab() {
-            const nombre = document.getElementById('tab-nombre').value.trim();
-            if (!nombre) { toast('⚠️ Escribe un nombre'); return; }
+            let html = `<div class="inicio-header">
+                <h1>Mi Agenda</h1>
+                <p>📅 ${new Date().toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long'})}</p>
+            </div>`;
             
-            const data = {
-                nombre: nombre,
-                icono: tabIconoSel,
-                tipo: tabTipoSel,
-                usuarioId: usuario.uid
-            };
-            
-            if (editandoTab) {
-                await db.collection('tabs').doc(editandoTab.id).update(data);
+            if (tabsConPendientes.length > 0) {
+                html += '<div class="pendientes-grid">';
+                for (const t of tabsConPendientes) {
+                    const count = contarPendientes(t.id, t.tipo);
+                    const tipoClass = t.tipo || 'notas';
+                    html += `<div class="pendiente-card" onclick="abrirTab('${t.id}')">
+                        <div class="pendiente-card-header">
+                            <div class="pendiente-card-icon ${tipoClass}">${t.icono}</div>
+                            <div class="pendiente-card-info">
+                                <div class="pendiente-card-name">${t.nombre}</div>
+                                <div class="pendiente-card-count">${count} pendiente${count > 1 ? 's' : ''}</div>
+                            </div>
+                            <div class="pendiente-card-arrow">›</div>
+                        </div>
+                    </div>`;
+                }
+                html += '</div>';
             } else {
-                data.orden = tabs.length;
-                await db.collection('tabs').add(data);
+                html += `<div class="todo-bien">
+                    <div class="icon">✨</div>
+                    <p>¡Todo al día!</p>
+                    <p style="font-size:0.9rem;margin-top:0.5rem">No tienes pendientes</p>
+                </div>`;
             }
             
-            cerrarModalTab();
-            cargarTabs();
-            toast('✓ Guardado');
-        }
-
-        async function eliminarTab() {
-            if (tabs.length <= 1) { toast('⚠️ Necesitas al menos una'); return; }
-            if (!confirm('¿Eliminar esta categoría y todo su contenido?')) return;
+            html += `<div class="ver-todas-btn" onclick="toggleSidebar()">☰ Ver todas las categorías</div>`;
             
-            // Eliminar items de esta tab
-            const itemsSnap = await db.collection('items').where('tabId', '==', editandoTab.id).get();
-            const batch = db.batch();
-            itemsSnap.forEach(doc => batch.delete(doc.ref));
-            batch.delete(db.collection('tabs').doc(editandoTab.id));
-            await batch.commit();
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function abrirTab(tabId) {
+            tabActiva = tabId;
+            vistaActual = 'detalle';
+            closeSidebar();
             
-            tabActiva = null;
-            cerrarModalTab();
-            cargarTabs();
-            toast('✓ Eliminado');
+            document.getElementById('menu-btn').style.display = 'none';
+            document.getElementById('back-btn').style.display = 'block';
+            document.getElementById('btn-add').classList.add('visible');
+            
+            const tab = tabs.find(t => t.id === tabId);
+            document.getElementById('topbar-title').textContent = tab.nombre;
+            
+            items = allItems.filter(i => i.tabId === tabId);
+            renderDetalle();
         }
 
-        // ITEMS
-        async function cargarItems() {
-            if (!tabActiva) return;
-            const snap = await db.collection('items').where('tabId', '==', tabActiva).get();
-            items = [];
-            snap.forEach(d => items.push({id: d.id, ...d.data()}));
-            renderContent();
+        function volverInicio() {
+            cargarTodo();
         }
 
-        function getTabActiva() {
-            return tabs.find(t => t.id === tabActiva);
-        }
-
-        function renderContent() {
-            const tab = getTabActiva();
+        function renderDetalle() {
+            const tab = tabs.find(t => t.id === tabActiva);
             if (!tab) return;
             
             const tipo = tab.tipo || 'notas';
-            let html = `<div class="content-header"><h1>${tab.icono} ${tab.nombre}</h1></div>`;
+            let html = '';
             
             if (tipo === 'pagos') {
                 const totalMes = items.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
@@ -776,10 +786,96 @@
             </div>`;
         }
 
+        // MODAL TAB
+        function abrirModalTab(tab = null) {
+            editandoTab = tab;
+            document.getElementById('modal-tab-titulo').textContent = tab ? '✏️ Editar' : '📁 Nueva Categoría';
+            document.getElementById('tab-nombre').value = tab ? tab.nombre : '';
+            tabIconoSel = tab ? tab.icono : '💳';
+            tabTipoSel = tab ? (tab.tipo || 'notas') : 'pagos';
+            renderTabIconos();
+            renderTiposBtns();
+            
+            let actionsHtml = `<button class="modal-btn btn-cancel" onclick="cerrarModalTab()">Cancelar</button>`;
+            if (tab) actionsHtml += `<button class="modal-btn btn-delete" onclick="eliminarTab()">🗑️</button>`;
+            actionsHtml += `<button class="modal-btn btn-save" onclick="guardarTab()">Guardar</button>`;
+            document.getElementById('modal-tab-actions').innerHTML = actionsHtml;
+            
+            document.getElementById('modal-tab').classList.add('visible');
+            closeSidebar();
+        }
+
+        function cerrarModalTab() {
+            document.getElementById('modal-tab').classList.remove('visible');
+        }
+
+        function renderTabIconos() {
+            document.getElementById('tab-icon-grid').innerHTML = iconosTabs.map(i => 
+                `<button type="button" class="icon-btn ${i === tabIconoSel ? 'active' : ''}" onclick="selTabIcono('${i}')">${i}</button>`
+            ).join('');
+        }
+
+        function selTabIcono(i) {
+            tabIconoSel = i;
+            renderTabIconos();
+        }
+
+        function renderTiposBtns() {
+            document.getElementById('tipo-grid').innerHTML = tiposDisponibles.map(t =>
+                `<div class="tipo-btn ${t.id === tabTipoSel ? 'active' : ''}" onclick="selTipo('${t.id}')">
+                    <div class="icon">${t.icono}</div>
+                    <div class="name">${t.nombre}</div>
+                </div>`
+            ).join('');
+        }
+
+        function selTipo(t) {
+            tabTipoSel = t;
+            renderTiposBtns();
+        }
+
+        async function guardarTab() {
+            const nombre = document.getElementById('tab-nombre').value.trim();
+            if (!nombre) { toast('⚠️ Escribe un nombre'); return; }
+            
+            const data = {
+                nombre: nombre,
+                icono: tabIconoSel,
+                tipo: tabTipoSel,
+                usuarioId: usuario.uid
+            };
+            
+            if (editandoTab) {
+                await db.collection('tabs').doc(editandoTab.id).update(data);
+            } else {
+                data.orden = tabs.length;
+                await db.collection('tabs').add(data);
+            }
+            
+            cerrarModalTab();
+            cargarTodo();
+            toast('✓ Guardado');
+        }
+
+        async function eliminarTab() {
+            if (tabs.length <= 1) { toast('⚠️ Necesitas al menos una'); return; }
+            if (!confirm('¿Eliminar esta categoría y todo su contenido?')) return;
+            
+            const itemsSnap = await db.collection('items').where('tabId', '==', editandoTab.id).get();
+            const batch = db.batch();
+            itemsSnap.forEach(doc => batch.delete(doc.ref));
+            batch.delete(db.collection('tabs').doc(editandoTab.id));
+            await batch.commit();
+            
+            cerrarModalTab();
+            cargarTodo();
+            toast('✓ Eliminado');
+        }
+
         // MODAL ITEM
         function abrirModalItem(item = null) {
             editandoItem = item;
-            const tab = getTabActiva();
+            const tab = tabs.find(t => t.id === tabActiva);
             if (!tab) { toast('⚠️ Selecciona una categoría'); return; }
             
             const tipo = tab.tipo || 'notas';
@@ -830,7 +926,7 @@
                     <div class="form-group">
                         <label class="form-label">Estado</label>
                         <select class="form-select" id="item-estado">
-                            <option value="pendiente" ${item?.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                            <option value="pendiente" ${item?.estado === 'pendiente' || !item ? 'selected' : ''}>Pendiente</option>
                             <option value="progreso" ${item?.estado === 'progreso' ? 'selected' : ''}>En progreso</option>
                             <option value="completado" ${item?.estado === 'completado' ? 'selected' : ''}>Completado</option>
                         </select>
@@ -867,7 +963,7 @@
         }
 
         async function guardarItem() {
-            const tab = getTabActiva();
+            const tab = tabs.find(t => t.id === tabActiva);
             if (!tab) return;
             
             const tipo = tab.tipo || 'notas';
@@ -912,7 +1008,13 @@
                     await db.collection('items').add(data);
                 }
                 cerrarModalItem();
-                cargarItems();
+                // Recargar items
+                const snapItems = await db.collection('items').where('usuarioId', '==', usuario.uid).get();
+                allItems = [];
+                snapItems.forEach(d => allItems.push({id: d.id, ...d.data()}));
+                items = allItems.filter(i => i.tabId === tabActiva);
+                renderSidebar();
+                renderDetalle();
                 toast('✓ Guardado');
             } catch (e) {
                 console.error(e);
@@ -923,14 +1025,24 @@
         async function eliminarItem(id) {
             if (!confirm('¿Eliminar?')) return;
             await db.collection('items').doc(id).delete();
-            cargarItems();
+            const snapItems = await db.collection('items').where('usuarioId', '==', usuario.uid).get();
+            allItems = [];
+            snapItems.forEach(d => allItems.push({id: d.id, ...d.data()}));
+            items = allItems.filter(i => i.tabId === tabActiva);
+            renderSidebar();
+            renderDetalle();
             toast('✓ Eliminado');
         }
 
         async function toggleTarea(id) {
             const t = items.find(i => i.id === id);
             await db.collection('items').doc(id).update({completada: !t.completada});
-            cargarItems();
+            const snapItems = await db.collection('items').where('usuarioId', '==', usuario.uid).get();
+            allItems = [];
+            snapItems.forEach(d => allItems.push({id: d.id, ...d.data()}));
+            items = allItems.filter(i => i.tabId === tabActiva);
+            renderSidebar();
+            renderDetalle();
         }
 
         async function marcarPagado(id) {
@@ -938,7 +1050,12 @@
             const historial = p.historial || [];
             historial.push({fecha: new Date().toISOString(), monto: p.monto});
             await db.collection('items').doc(id).update({pagadoEsteMes: true, historial: historial});
-            cargarItems();
+            const snapItems = await db.collection('items').where('usuarioId', '==', usuario.uid).get();
+            allItems = [];
+            snapItems.forEach(d => allItems.push({id: d.id, ...d.data()}));
+            items = allItems.filter(i => i.tabId === tabActiva);
+            renderSidebar();
+            renderDetalle();
             toast('✓ Marcado como pagado');
         }
 
