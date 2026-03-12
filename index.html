@@ -110,6 +110,19 @@
         .btn-add{position:fixed;bottom:20px;right:20px;width:60px;height:60px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:50%;color:white;font-size:1.8rem;cursor:pointer;box-shadow:0 4px 20px rgba(99,102,241,0.5);z-index:50;display:none}
         .btn-add.visible{display:flex;align-items:center;justify-content:center}
         
+        .btn-share{position:fixed;bottom:20px;left:20px;height:50px;padding:0 1.2rem;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:25px;color:white;font-size:0.9rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(34,197,94,0.5);z-index:50;display:none;align-items:center;gap:0.5rem}
+        .btn-share.visible{display:flex}
+        
+        .select-bar{display:flex;align-items:center;justify-content:space-between;background:rgba(99,102,241,0.2);padding:0.75rem 1rem;border-radius:12px;margin-bottom:1rem}
+        .select-bar label{display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-weight:600}
+        .select-count{color:#a5b4fc;font-size:0.85rem}
+        
+        .item-checkbox{width:22px;height:22px;border-radius:6px;border:2px solid #6366f1;background:rgba(30,41,59,0.8);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:0.75rem}
+        .item-checkbox.checked{background:#6366f1;color:white}
+        
+        .card-selectable{display:flex;align-items:flex-start}
+        .card-selectable .card-content{flex:1}
+        
         .item-list{display:flex;flex-direction:column;gap:0.75rem}
         .item-empty{text-align:center;padding:3rem 1rem;color:#64748b}
         .item-empty .icon{font-size:3rem;margin-bottom:0.5rem;opacity:0.5}
@@ -236,6 +249,7 @@
         </div>
         <div class="content" id="content"></div>
         <button class="btn-add" id="btn-add" onclick="abrirModalItem()">+</button>
+        <button class="btn-share" id="btn-share" onclick="compartirSeleccionados()">📤 Compartir</button>
     </div>
 
     <div class="modal" id="modal-item">
@@ -292,7 +306,8 @@
 
         let usuario = null, tabs = [], tabActiva = null, items = [], allItems = [], editandoItem = null, editandoTab = null;
         let tabIconoSel = '💳', tabTipoSel = 'pagos';
-        let vistaActual = 'inicio'; // 'inicio' o 'detalle'
+        let vistaActual = 'inicio';
+        let itemsSeleccionados = new Set(); // 'inicio' o 'detalle'
         const iconosTabs = ['💳','📋','💼','✅','🏠','🚗','💰','📚','🎯','🛒','💊','📱'];
         const tiposDisponibles = [
             {id: 'pagos', nombre: 'Pagos', icono: '💳'},
@@ -631,11 +646,13 @@
         function abrirTab(tabId) {
             tabActiva = tabId;
             vistaActual = 'detalle';
+            itemsSeleccionados.clear();
             closeSidebar();
             
             document.getElementById('menu-btn').style.display = 'none';
             document.getElementById('back-btn').style.display = 'block';
             document.getElementById('btn-add').classList.add('visible');
+            document.getElementById('btn-share').classList.remove('visible');
             
             const tab = tabs.find(t => t.id === tabId);
             document.getElementById('topbar-title').textContent = tab.nombre;
@@ -654,6 +671,18 @@
             
             const tipo = tab.tipo || 'notas';
             let html = '';
+            
+            // Barra de selección
+            if (items.length > 0) {
+                const todosSeleccionados = items.length > 0 && items.every(i => itemsSeleccionados.has(i.id));
+                html += `<div class="select-bar">
+                    <label>
+                        <div class="item-checkbox ${todosSeleccionados ? 'checked' : ''}" onclick="toggleSeleccionarTodos()">${todosSeleccionados ? '✓' : ''}</div>
+                        Seleccionar todos
+                    </label>
+                    <span class="select-count">${itemsSeleccionados.size} seleccionado${itemsSeleccionados.size !== 1 ? 's' : ''}</span>
+                </div>`;
+            }
             
             if (tipo === 'pagos') {
                 const totalMes = items.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
@@ -694,6 +723,75 @@
             }
             
             document.getElementById('content').innerHTML = html;
+            actualizarBotonCompartir();
+        }
+        
+        function toggleSeleccionarTodos() {
+            const todosSeleccionados = items.every(i => itemsSeleccionados.has(i.id));
+            if (todosSeleccionados) {
+                items.forEach(i => itemsSeleccionados.delete(i.id));
+            } else {
+                items.forEach(i => itemsSeleccionados.add(i.id));
+            }
+            renderDetalle();
+        }
+        
+        function toggleSeleccionItem(id) {
+            if (itemsSeleccionados.has(id)) {
+                itemsSeleccionados.delete(id);
+            } else {
+                itemsSeleccionados.add(id);
+            }
+            renderDetalle();
+        }
+        
+        function actualizarBotonCompartir() {
+            const btn = document.getElementById('btn-share');
+            if (itemsSeleccionados.size > 0) {
+                btn.classList.add('visible');
+                btn.innerHTML = `📤 Compartir (${itemsSeleccionados.size})`;
+            } else {
+                btn.classList.remove('visible');
+            }
+        }
+        
+        function compartirSeleccionados() {
+            const tab = tabs.find(t => t.id === tabActiva);
+            if (!tab) return;
+            
+            const tipo = tab.tipo || 'notas';
+            const itemsParaCompartir = items.filter(i => itemsSeleccionados.has(i.id));
+            
+            let texto = `📋 *${tab.nombre}*\n\n`;
+            
+            itemsParaCompartir.forEach((item, index) => {
+                if (tipo === 'pagos') {
+                    texto += `💳 *${item.nombre}*\n`;
+                    texto += `   📅 Día ${item.dia} del mes\n`;
+                    texto += `   💵 $${parseFloat(item.monto || 0).toLocaleString()}\n`;
+                    if (item.cuenta) texto += `   🔢 ${item.cuenta}\n`;
+                    if (item.notas) texto += `   📝 ${item.notas}\n`;
+                    texto += item.pagadoEsteMes ? `   ✅ Pagado\n` : `   ⏳ Pendiente\n`;
+                } else if (tipo === 'notas') {
+                    texto += `📋 *${item.titulo}*\n`;
+                    if (item.descripcion) texto += `   ${item.descripcion}\n`;
+                } else if (tipo === 'proyectos') {
+                    const estados = {pendiente: '⏳ Pendiente', progreso: '🔄 En progreso', completado: '✅ Completado'};
+                    texto += `💼 *${item.nombre}*\n`;
+                    if (item.descripcion) texto += `   ${item.descripcion}\n`;
+                    texto += `   ${estados[item.estado] || estados.pendiente}\n`;
+                } else if (tipo === 'tareas') {
+                    texto += item.completada ? `✅` : `⬜`;
+                    texto += ` ${item.titulo}\n`;
+                    if (item.fechaLimite) texto += `   📅 ${new Date(item.fechaLimite).toLocaleDateString('es-MX')}\n`;
+                }
+                texto += '\n';
+            });
+            
+            texto += `\n_Enviado desde Mi Agenda_`;
+            
+            const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
         }
 
         function diasRestantes(dia) {
@@ -709,6 +807,7 @@
         function renderPago(p) {
             const dr = diasRestantes(p.dia);
             let clase = '', badge = '';
+            const seleccionado = itemsSeleccionados.has(p.id);
             
             if (p.pagadoEsteMes) {
                 clase = 'pagado';
@@ -723,32 +822,39 @@
                 badge = `<span class="card-badge badge-bien">${dr} días</span>`;
             }
             
-            return `<div class="card ${clase}">
-                <div class="card-header">
-                    <span class="card-titulo">💳 ${p.nombre}</span>
-                    <span class="card-monto">$${parseFloat(p.monto || 0).toLocaleString()}</span>
-                </div>
-                <div class="card-info">📅 Día ${p.dia} de cada mes ${badge}</div>
-                ${p.cuenta ? `<div class="card-cuenta" onclick="copiar('${p.cuenta}')"><div class="card-cuenta-label">CUENTA</div><div class="card-cuenta-num">${p.cuenta} 📋</div></div>` : ''}
-                ${p.notas ? `<div class="card-notas">💡 ${p.notas}</div>` : ''}
-                <div class="card-actions">
-                    ${!p.pagadoEsteMes ? `<button class="card-btn btn-pagar" onclick="marcarPagado('${p.id}')">✓ Pagado</button>` : ''}
-                    <button class="card-btn btn-historial" onclick="verHistorial('${p.id}')">📊</button>
-                    <button class="card-btn btn-edit" onclick="editarItem('${p.id}')">✏️</button>
-                    <button class="card-btn btn-del" onclick="eliminarItem('${p.id}')">🗑️</button>
+            return `<div class="card ${clase} card-selectable">
+                <div class="item-checkbox ${seleccionado ? 'checked' : ''}" onclick="toggleSeleccionItem('${p.id}')">${seleccionado ? '✓' : ''}</div>
+                <div class="card-content">
+                    <div class="card-header">
+                        <span class="card-titulo">💳 ${p.nombre}</span>
+                        <span class="card-monto">$${parseFloat(p.monto || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="card-info">📅 Día ${p.dia} de cada mes ${badge}</div>
+                    ${p.cuenta ? `<div class="card-cuenta" onclick="copiar('${p.cuenta}')"><div class="card-cuenta-label">CUENTA</div><div class="card-cuenta-num">${p.cuenta} 📋</div></div>` : ''}
+                    ${p.notas ? `<div class="card-notas">💡 ${p.notas}</div>` : ''}
+                    <div class="card-actions">
+                        ${!p.pagadoEsteMes ? `<button class="card-btn btn-pagar" onclick="marcarPagado('${p.id}')">✓ Pagado</button>` : ''}
+                        <button class="card-btn btn-historial" onclick="verHistorial('${p.id}')">📊</button>
+                        <button class="card-btn btn-edit" onclick="editarItem('${p.id}')">✏️</button>
+                        <button class="card-btn btn-del" onclick="eliminarItem('${p.id}')">🗑️</button>
+                    </div>
                 </div>
             </div>`;
         }
 
         function renderNota(n) {
             const fecha = n.fecha ? new Date(n.fecha).toLocaleDateString('es-MX') : '';
-            return `<div class="card" style="border-left-color:#ec4899">
-                <div class="card-titulo">${n.titulo}</div>
-                ${n.descripcion ? `<div class="card-desc">${n.descripcion}</div>` : ''}
-                <div class="card-fecha">📅 ${fecha}</div>
-                <div class="card-actions">
-                    <button class="card-btn btn-edit" onclick="editarItem('${n.id}')">✏️</button>
-                    <button class="card-btn btn-del" onclick="eliminarItem('${n.id}')">🗑️</button>
+            const seleccionado = itemsSeleccionados.has(n.id);
+            return `<div class="card card-selectable" style="border-left-color:#ec4899">
+                <div class="item-checkbox ${seleccionado ? 'checked' : ''}" onclick="toggleSeleccionItem('${n.id}')">${seleccionado ? '✓' : ''}</div>
+                <div class="card-content">
+                    <div class="card-titulo">${n.titulo}</div>
+                    ${n.descripcion ? `<div class="card-desc">${n.descripcion}</div>` : ''}
+                    <div class="card-fecha">📅 ${fecha}</div>
+                    <div class="card-actions">
+                        <button class="card-btn btn-edit" onclick="editarItem('${n.id}')">✏️</button>
+                        <button class="card-btn btn-del" onclick="eliminarItem('${n.id}')">🗑️</button>
+                    </div>
                 </div>
             </div>`;
         }
@@ -759,29 +865,39 @@
                 progreso: '<span class="card-badge badge-progreso">En progreso</span>',
                 completado: '<span class="card-badge badge-completado">Completado</span>'
             };
-            return `<div class="card" style="border-left-color:#8b5cf6">
-                <div class="card-header">
-                    <span class="card-titulo">${p.nombre}</span>
-                    ${badges[p.estado] || badges.pendiente}
-                </div>
-                ${p.descripcion ? `<div class="card-desc">${p.descripcion}</div>` : ''}
-                <div class="card-actions">
-                    <button class="card-btn btn-edit" onclick="editarItem('${p.id}')">✏️</button>
-                    <button class="card-btn btn-del" onclick="eliminarItem('${p.id}')">🗑️</button>
+            const seleccionado = itemsSeleccionados.has(p.id);
+            return `<div class="card card-selectable" style="border-left-color:#8b5cf6">
+                <div class="item-checkbox ${seleccionado ? 'checked' : ''}" onclick="toggleSeleccionItem('${p.id}')">${seleccionado ? '✓' : ''}</div>
+                <div class="card-content">
+                    <div class="card-header">
+                        <span class="card-titulo">${p.nombre}</span>
+                        ${badges[p.estado] || badges.pendiente}
+                    </div>
+                    ${p.descripcion ? `<div class="card-desc">${p.descripcion}</div>` : ''}
+                    <div class="card-actions">
+                        <button class="card-btn btn-edit" onclick="editarItem('${p.id}')">✏️</button>
+                        <button class="card-btn btn-del" onclick="eliminarItem('${p.id}')">🗑️</button>
+                    </div>
                 </div>
             </div>`;
         }
 
         function renderTarea(t) {
-            return `<div class="tarea-card ${t.completada ? 'completada' : ''}">
-                <div class="tarea-check ${t.completada ? 'checked' : ''}" onclick="toggleTarea('${t.id}')">${t.completada ? '✓' : ''}</div>
-                <div class="tarea-content">
-                    <div class="tarea-titulo">${t.titulo}</div>
-                    ${t.fechaLimite ? `<div class="tarea-fecha">📅 ${new Date(t.fechaLimite).toLocaleDateString('es-MX')}</div>` : ''}
-                </div>
-                <div class="card-actions">
-                    <button class="card-btn btn-edit" onclick="editarItem('${t.id}')">✏️</button>
-                    <button class="card-btn btn-del" onclick="eliminarItem('${t.id}')">🗑️</button>
+            const seleccionado = itemsSeleccionados.has(t.id);
+            return `<div class="card card-selectable" style="border-left-color:#22c55e;${t.completada ? 'opacity:0.6' : ''}">
+                <div class="item-checkbox ${seleccionado ? 'checked' : ''}" onclick="toggleSeleccionItem('${t.id}')">${seleccionado ? '✓' : ''}</div>
+                <div class="card-content">
+                    <div style="display:flex;align-items:center;gap:0.75rem">
+                        <div class="tarea-check ${t.completada ? 'checked' : ''}" onclick="toggleTarea('${t.id}')">${t.completada ? '✓' : ''}</div>
+                        <div class="tarea-content">
+                            <div class="tarea-titulo" style="${t.completada ? 'text-decoration:line-through;color:#64748b' : ''}">${t.titulo}</div>
+                            ${t.fechaLimite ? `<div class="tarea-fecha">📅 ${new Date(t.fechaLimite).toLocaleDateString('es-MX')}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="card-actions" style="margin-top:0.5rem">
+                        <button class="card-btn btn-edit" onclick="editarItem('${t.id}')">✏️</button>
+                        <button class="card-btn btn-del" onclick="eliminarItem('${t.id}')">🗑️</button>
+                    </div>
                 </div>
             </div>`;
         }
